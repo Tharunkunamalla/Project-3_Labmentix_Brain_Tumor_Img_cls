@@ -4,36 +4,22 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import tensorflow as tf
+from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 
-# =================== Rebuild the model architecture ===================
-def build_model():
-    base_model = tf.keras.applications.MobileNetV2(
-        input_shape=(224, 224, 3),
-        include_top=False,
-        weights=None  # Set to None since we're loading our own weights
-    )
-    x = tf.keras.layers.GlobalAveragePooling2D()(base_model.output)
-    x = tf.keras.layers.Dense(128, activation='relu')(x)
-    output = tf.keras.layers.Dense(4, activation='softmax')(x)
-    model = tf.keras.Model(inputs=base_model.input, outputs=output)
-    return model
-
-# =================== Load model and weights ===================
-MODEL_PATH = 'best_model.h5'
+# ================= Load your trained simple Sequential model =================
+MODEL_PATH = 'best_model.h5'  # This must be a full model (not just weights)
 
 try:
-    model = build_model()
-    model.load_weights(MODEL_PATH)
+    model = load_model(MODEL_PATH, compile=False)
 except Exception as e:
-    st.error(f"❌ Failed to load model weights: {e}")
+    st.error(f"❌ Failed to load model: {e}")
     st.stop()
 
-# =================== Class labels ===================
+# ================= Define class labels =================
 CLASS_NAMES = ['Glioma Tumor', 'Meningioma Tumor', 'No Tumor', 'Pituitary Tumor']
 
-# =================== Preprocessing ===================
+# ================= Image Preprocessing =================
 def preprocess_image(img):
     img = img.resize((224, 224))
     img_array = image.img_to_array(img)
@@ -41,7 +27,7 @@ def preprocess_image(img):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-# =================== Streamlit UI ===================
+# ================= Streamlit UI =================
 st.set_page_config(page_title="Brain Tumor Classifier", layout="centered")
 st.title("🧠 Brain Tumor MRI Classification")
 st.write("Upload an MRI scan image to predict the type of brain tumor.")
