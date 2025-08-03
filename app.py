@@ -4,21 +4,36 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 
-# Load your trained model
-MODEL_PATH = 'best_model.h5'  # Path to your trained model
+# =================== Rebuild the model architecture ===================
+def build_model():
+    base_model = tf.keras.applications.MobileNetV2(
+        input_shape=(224, 224, 3),
+        include_top=False,
+        weights=None  # Set to None since we're loading our own weights
+    )
+    x = tf.keras.layers.GlobalAveragePooling2D()(base_model.output)
+    x = tf.keras.layers.Dense(128, activation='relu')(x)
+    output = tf.keras.layers.Dense(4, activation='softmax')(x)
+    model = tf.keras.Model(inputs=base_model.input, outputs=output)
+    return model
+
+# =================== Load model and weights ===================
+MODEL_PATH = 'best_model.h5'
 
 try:
-    model = load_model(MODEL_PATH, compile=False)  # Safer on newer Keras versions
+    model = build_model()
+    model.load_weights(MODEL_PATH)
 except Exception as e:
-    st.error(f"❌ Failed to load model: {e}")
+    st.error(f"❌ Failed to load model weights: {e}")
     st.stop()
 
-# Define class labels
+# =================== Class labels ===================
 CLASS_NAMES = ['Glioma Tumor', 'Meningioma Tumor', 'No Tumor', 'Pituitary Tumor']
 
+# =================== Preprocessing ===================
 def preprocess_image(img):
     img = img.resize((224, 224))
     img_array = image.img_to_array(img)
@@ -26,7 +41,7 @@ def preprocess_image(img):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-# Streamlit UI
+# =================== Streamlit UI ===================
 st.set_page_config(page_title="Brain Tumor Classifier", layout="centered")
 st.title("🧠 Brain Tumor MRI Classification")
 st.write("Upload an MRI scan image to predict the type of brain tumor.")
@@ -60,7 +75,7 @@ if uploaded_file is not None:
     for bar in bars:
         yval = bar.get_height()
         ax.text(bar.get_x() + bar.get_width() / 2, yval + 0.01, f'{yval:.2f}', ha='center', fontsize=9)
-    
+
     st.pyplot(fig)
 
 st.markdown("""
