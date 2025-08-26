@@ -4,22 +4,23 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import load_model
 
-# ================= Load your trained simple Sequential model =================
-MODEL_PATH = 'best_model.h5'  # This must be a full model (not just weights)
+# =================== Load the actual trained model ===================
+MODEL_PATH = 'best_model.h5'
 
 try:
-    model = load_model(MODEL_PATH, compile=False)
+    model = load_model(MODEL_PATH, compile=False)  # Works for full model with 3 layers
 except Exception as e:
     st.error(f"❌ Failed to load model: {e}")
     st.stop()
 
-# ================= Define class labels =================
+# =================== Class labels ===================
 CLASS_NAMES = ['Glioma Tumor', 'Meningioma Tumor', 'No Tumor', 'Pituitary Tumor']
 
-# ================= Image Preprocessing =================
+# =================== Preprocessing ===================
 def preprocess_image(img):
     img = img.resize((224, 224))
     img_array = image.img_to_array(img)
@@ -27,7 +28,7 @@ def preprocess_image(img):
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
-# ================= Streamlit UI =================
+# =================== Streamlit UI ===================
 st.set_page_config(page_title="Brain Tumor Classifier", layout="centered")
 st.title("🧠 Brain Tumor MRI Classification")
 st.write("Upload an MRI scan image to predict the type of brain tumor.")
